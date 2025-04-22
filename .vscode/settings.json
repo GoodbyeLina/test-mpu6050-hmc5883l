@@ -1,0 +1,16 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.espIdfPathWin": "d:\\Espressif\\v5.0.8\\esp-idf",
+    "idf.pythonInstallPath": "d:\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32s3.cfg"
+    ],
+    "idf.toolsPathWin": "d:\\.espressif",
+    "files.associations": {
+        "my_mpu6050.h": "c",
+        "esp_err.h": "c",
+        "esp_log.h": "c",
+        "esp_system.h": "c"
+    }
+}
