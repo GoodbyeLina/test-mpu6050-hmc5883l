@@ -3,12 +3,12 @@
 
 
 static const char *TAG = "mpu6050 test";
- mpu6050_handle_t mpu6050 = NULL;
+static mpu6050_handle_t mpu6050 = NULL;
 
 /**
  * @brief i2c master initialization
  */
-void i2c_sensor_mpu6050_init(void)
+void my_mpu6050_init(void)
 {
     esp_err_t ret;
 
@@ -20,4 +20,9 @@ void i2c_sensor_mpu6050_init(void)
 
     ret = mpu6050_wake_up(mpu6050);
     TEST_ASSERT_EQUAL(ESP_OK, ret);
+}
+
+mpu6050_handle_t my_mpu6050_get_handle(void)
+{
+    return mpu6050;
 }

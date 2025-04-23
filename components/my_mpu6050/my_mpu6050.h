@@ -16,4 +16,5 @@
 /**
  * @brief i2c master initialization
  */
-void i2c_sensor_mpu6050_init(void);
+void my_mpu6050_init(void);
+mpu6050_handle_t my_mpu6050_get_handle(void);
