@@ -15,3 +15,8 @@ dependencies:
   #   # All dependencies of `main` are public by default.
   #   public: true
   espressif/mpu6050: ^1.2.0
+  
+  esp_jpeg:
+    version: "^1.0.0"
+    rules:
+      - if: "idf_version >=5.0"
