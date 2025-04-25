@@ -157,7 +157,7 @@ TickType_t ArrowTest(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int 
 	return diffTick;
 }
 
-TickType_t Sensor_Test(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height) {
+TickType_t Sensor_Test(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, float Pitch, float Roll, float Yaw) {
 	TickType_t startTick, endTick, diffTick;
 	startTick = xTaskGetTickCount();
 
@@ -180,7 +180,8 @@ TickType_t Sensor_Test(TFT_t * dev, FontxFile *fx, uint16_t model, int width, in
 	lcdFillScreen(dev, BLACK);
 
 	// 俯仰角（Pitch）
-	strcpy((char *)ascii_1, "Pitch: 0");
+	// strcpy((char *)ascii_1, "Pitch: 0");
+	sprintf((char *)ascii_1, "Pitch: %.2f", Pitch);
 	if (width < height) {
 		xpos = ((width - fontHeight) / 2) - 1 + 36;
 		ypos = (height - (strlen((char *)ascii_1) * fontWidth)) / 2 - 36;
@@ -194,10 +195,12 @@ TickType_t Sensor_Test(TFT_t * dev, FontxFile *fx, uint16_t model, int width, in
 	lcdDrawString(dev, fx, xpos, ypos, ascii_1, color);
 
 	// 横滚角（Roll）
-	strcpy((char *)ascii_2, "Roll: 0");
+	// strcpy((char *)ascii_2, "Roll: 0");
+	sprintf((char *)ascii_2, "Roll: %.2f", Roll);
+
 	if (width < height) {
-		xpos = ((width - fontHeight) / 2) - 1 + 36;
-		ypos = (height - (strlen((char *)ascii_2) * fontWidth)) / 2 + 36;
+		xpos = ((width - fontHeight) / 2) - 1 + 12;
+		ypos = (height - (strlen((char *)ascii_2) * fontWidth)) / 2 - 36;
 		lcdSetFontDirection(dev, DIRECTION90);
 	} else {
 		ypos = ((height - fontHeight) / 2) - 1;
@@ -208,10 +211,12 @@ TickType_t Sensor_Test(TFT_t * dev, FontxFile *fx, uint16_t model, int width, in
 	lcdDrawString(dev, fx, xpos, ypos, ascii_2, color);
 
 	// 航向角（Yaw）
-	strcpy((char *)ascii_3, "Yaw: 0");
+	// strcpy((char *)ascii_3, "Yaw: 0");
+	sprintf((char *)ascii_3, "Yaw: %.2f", Yaw);
+
 	if (width < height) {
-		xpos = ((width - fontHeight) / 2) - 1 + 12;
-		ypos = (height - (strlen((char *)ascii_3) * fontWidth)) / 2 - 48;
+		xpos = ((width - fontHeight) / 2) - 1 - 12;
+		ypos = (height - (strlen((char *)ascii_3) * fontWidth)) / 2 - 36;
 		// lcdSetFontDirection(dev, DIRECTION90);
 	} else {
 		ypos = ((height - fontHeight) / 2) - 1;
@@ -315,6 +320,9 @@ void app_main(void)
     TEST_ASSERT_EQUAL(ESP_OK, ret);
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(MPU6050_WHO_AM_I_VAL, mpu6050_deviceid, "Who Am I register does not contain expected data");
 
+	float gyro_offsets[3];
+    calibrate_gyro(my_mpu6050_get_handle(), gyro_offsets);
+
     // 初始化 sc7a20h(使用默认配置)
     for (int i = 0; i < 3; i++) {
         esp_err_t err = sc7a20h_init();
@@ -370,14 +378,14 @@ void app_main(void)
 	InitFontx(fx24M,"/fonts/ILMH24XB.FNT",""); // 12x24Dot Mincyo
 	InitFontx(fx32M,"/fonts/ILMH32XB.FNT",""); // 16x32Dot Mincyo
 
-        ESP_LOGI(TAG, "Disable Touch Contoller");
-        int XPT_MISO_GPIO = -1;
-        int XPT_CS_GPIO = -1;
-        int XPT_IRQ_GPIO = -1;
-        int XPT_SCLK_GPIO = -1;
-        int XPT_MOSI_GPIO = -1;
-        spi_master_init(&dev, CONFIG_MOSI_GPIO, CONFIG_SCLK_GPIO, CONFIG_TFT_CS_GPIO, CONFIG_DC_GPIO, 
-            CONFIG_RESET_GPIO, CONFIG_BL_GPIO, XPT_MISO_GPIO, XPT_CS_GPIO, XPT_IRQ_GPIO, XPT_SCLK_GPIO, XPT_MOSI_GPIO);
+	ESP_LOGI(TAG, "Disable Touch Contoller");
+	int XPT_MISO_GPIO = -1;
+	int XPT_CS_GPIO = -1;
+	int XPT_IRQ_GPIO = -1;
+	int XPT_SCLK_GPIO = -1;
+	int XPT_MOSI_GPIO = -1;
+	spi_master_init(&dev, CONFIG_MOSI_GPIO, CONFIG_SCLK_GPIO, CONFIG_TFT_CS_GPIO, CONFIG_DC_GPIO, 
+		CONFIG_RESET_GPIO, CONFIG_BL_GPIO, XPT_MISO_GPIO, XPT_CS_GPIO, XPT_IRQ_GPIO, XPT_SCLK_GPIO, XPT_MOSI_GPIO);
     
     #if CONFIG_ST7735
         uint16_t model = 0x7735;
@@ -387,30 +395,60 @@ void app_main(void)
     
     // 循环读取任务
     while (1) {
-        // 读取HMC5883L数据
-        if (hmc5883l_read(&hcm5883l_data) == ESP_OK) {
+    // 读取HMC5883L数据
+/*         if (hmc5883l_read(&hcm5883l_data) == ESP_OK) {
             ESP_LOGI(TAG, "X:%.2fG Y:%.2fG Z:%.2fG Heading:%.1f°",
                     hcm5883l_data.x, hcm5883l_data.y, hcm5883l_data.z, hcm5883l_data.heading);
         } else {
             ESP_LOGE(TAG, "Failed to read hcm5883l_data");
         }
-        // 读取mpu6050数据
+    
+ */	// 读取mpu6050数据
         ret = mpu6050_get_acce(my_mpu6050_get_handle(), &acce);
-        TEST_ASSERT_EQUAL(ESP_OK, ret);
-        ESP_LOGI(TAG, "acce_x:%.2f, acce_y:%.2f, acce_z:%.2f", acce.acce_x, acce.acce_y, acce.acce_z);
+        // TEST_ASSERT_EQUAL(ESP_OK, ret);
+        // ESP_LOGI(TAG, "acce_x:%.2f, acce_y:%.2f, acce_z:%.2f", acce.acce_x, acce.acce_y, acce.acce_z);
     
         ret = mpu6050_get_gyro(my_mpu6050_get_handle(), &gyro);
-        TEST_ASSERT_EQUAL(ESP_OK, ret);
-        ESP_LOGI(TAG, "gyro_x:%.2f, gyro_y:%.2f, gyro_z:%.2f", gyro.gyro_x, gyro.gyro_y, gyro.gyro_z);
-    
-        // 读取 sc7a20h 数据
-        if (sc7a20h_read_accel(&x, &y, &z) == ESP_OK) {
+        // TEST_ASSERT_EQUAL(ESP_OK, ret);
+        // ESP_LOGI(TAG, "gyro_x:%.2f, gyro_y:%.2f, gyro_z:%.2f", gyro.gyro_x, gyro.gyro_y, gyro.gyro_z);
+		
+		gyro.gyro_x -= gyro_offsets[0];
+        gyro.gyro_y -= gyro_offsets[1];
+        gyro.gyro_z -= gyro_offsets[2];
+
+        // 姿态解算
+        static float roll = 0.0f, pitch = 0.0f, yaw = 0.0f;
+        static uint32_t last_time = 0;
+        const float alpha = 0.96f;
+        
+        // 计算时间差（单位：秒）
+        float dt = (xTaskGetTickCount() - last_time) * portTICK_PERIOD_MS / 1000.0f;
+        last_time = xTaskGetTickCount();
+
+        // 加速度计姿态
+        float acc_roll = atan2f(acce.acce_y, acce.acce_z) * 57.2958f;
+        float acc_pitch = atan2f(-acce.acce_x, sqrtf(acce.acce_y*acce.acce_y + acce.acce_z*acce.acce_z)) * 57.2958f;
+
+        // 陀螺仪积分
+        roll = alpha * (roll + gyro.gyro_x * dt) + (1 - alpha) * acc_roll;
+        pitch = alpha * (pitch + gyro.gyro_y * dt) + (1 - alpha) * acc_pitch;
+        yaw += gyro.gyro_z * dt;
+
+        // 限制角度范围
+        if (yaw > 180.0f) yaw -= 360.0f;
+        else if (yaw < -180.0f) yaw += 360.0f;
+
+        // 完整姿态信息输出
+        ESP_LOGI(TAG, "Attitude: Roll=%.2f° Pitch=%.2f° Yaw=%.2f°", roll, pitch, yaw);
+
+    // 读取 sc7a20h 数据
+/*         if (sc7a20h_read_accel(&x, &y, &z) == ESP_OK) {
             ESP_LOGI(TAG, "Accel X:%.2fg Y:%.2fg Z:%.2fg\n",
                     x * 0.004f, y * 0.004f, z * 0.004f);
         }
-
-        // TFT显示屏显示任务
-		Sensor_Test(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT);
+ */
+    // TFT显示屏显示任务
+		Sensor_Test(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT, pitch, roll, yaw);
 		WAIT;
 
         vTaskDelay(pdMS_TO_TICKS(500));

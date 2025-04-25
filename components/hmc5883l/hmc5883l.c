@@ -41,26 +41,9 @@ esp_err_t hmc5883l_init(const hmc5883l_config_t *config) {
         current_config = default_config;
     }
 
-    // // 初始化I2C
-    // i2c_config_t i2c_conf = {
-    //     .mode = I2C_MODE_MASTER,
-    //     .sda_io_num = current_config.sda_pin,
-    //     .scl_io_num = current_config.scl_pin,
-    //     .sda_pullup_en = GPIO_PULLUP_ENABLE,
-    //     .scl_pullup_en = GPIO_PULLUP_ENABLE,
-    //     .master.clk_speed = current_config.i2c_freq,
-    // };
-
-    // esp_err_t ret = i2c_param_config(current_config.i2c_port, &i2c_conf);
-    // if (ret != ESP_OK) return ret;
-
-    // ret = i2c_driver_install(current_config.i2c_port, 
-    //                         I2C_MODE_MASTER, 0, 0, 0);
-    // if (ret != ESP_OK) return ret;
-
     // 配置传感器
     esp_err_t ret;
-    ret = write_byte(CONFIG_REG_A, 0x78); // 8采样平均，15Hz输出速率
+    ret = write_byte(CONFIG_REG_A, 0x78); // 8采样平均，75Hz输出速率
     if (ret != ESP_OK) return ret;
 
     ret = write_byte(CONFIG_REG_B, 0x20); // ±1.3Ga量程
